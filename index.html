@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>US Shipping Cost Optimization — March 2026</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root { --bg:#0f1115; --card:#171a21; --border:#262a35; --text:#e8eaf0; --dim:#8b90a0; --orange:#ff7a1a; --blue:#3b82f6; --green:#22c55e; --red:#ef4444; --purple:#a855f7; }
+* { box-sizing: border-box; margin: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); padding: 28px 32px; }
+h1 { font-size: 26px; font-weight: 700; }
+.sub { color: var(--dim); font-size: 13px; margin: 4px 0 24px; line-height: 1.5; }
+.grid { display: grid; gap: 16px; }
+.cards3 { grid-template-columns: repeat(3, 1fr); }
+.cards4 { grid-template-columns: repeat(4, 1fr); }
+.row2 { grid-template-columns: 1fr 1fr; }
+.row-map { grid-template-columns: 2fr 1fr; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+.label { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; }
+.value { font-size: 32px; font-weight: 700; margin: 6px 0 4px; }
+.delta { font-size: 12px; margin-top: 2px; }
+.delta.green { color: var(--green); }
+.delta.dim { color: var(--dim); }
+.section { margin-top: 24px; }
+h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+.chart { height: 340px; }
+.map { height: 440px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+th { color: var(--dim); font-weight: 500; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+.pill.la { background: rgba(255,122,26,0.15); color: var(--orange); }
+.pill.nj { background: rgba(59,130,246,0.15); color: var(--blue); }
+.legend { display: flex; gap: 18px; color: var(--dim); font-size: 11px; margin-top: 8px; }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.legend .la::before { background: var(--orange); }
+.legend .nj::before { background: var(--blue); }
+
+/* Scenario boxes */
+.scenarios { display: flex; gap: 12px; margin-bottom: 22px; }
+.scenario { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; }
+.scn-tag { color: var(--dim); font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; font-weight: 600; }
+.scn-body { font-size: 13px; font-family: ui-monospace, "SF Mono", Menlo, monospace; color: var(--text); line-height: 1.6; }
+.scn-desc { color: var(--dim); font-size: 11px; margin-top: 8px; line-height: 1.5; }
+.scn-arrow { display: flex; align-items: center; color: var(--dim); font-size: 22px; font-weight: 300; }
+
+/* Saving breakdown bar */
+.saving-bar { display: flex; border-radius: 8px; overflow: hidden; height: 32px; margin-top: 10px; }
+.saving-bar .segment { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #fff; }
+.saving-bar .seg-priority { background: var(--purple); }
+.saving-bar .seg-ontrac { background: var(--orange); }
+
+/* Callout */
+.callout { margin-top: 12px; padding: 11px 14px; border-left: 3px solid var(--orange); border-radius: 6px; font-size: 11px; color: var(--dim); line-height: 1.6; background: rgba(255,122,26,0.06); }
+.callout strong { color: var(--text); }
+.callout.purple { border-left-color: var(--purple); background: rgba(168,85,247,0.06); }
+
+/* Methodology */
+.method { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 22px; font-size: 12px; line-height: 1.7; }
+.method h2 { margin-bottom: 16px; }
+.method ol { padding-left: 22px; color: var(--dim); }
+.method li { margin-bottom: 10px; }
+.method strong { color: var(--text); }
+.method em { color: var(--orange); font-style: normal; font-weight: 600; }
+.cascade-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin: 8px 0; font-size: 11px; font-family: ui-monospace, monospace; line-height: 1.8; color: var(--dim); }
+.y { color: var(--green); }
+.n { color: var(--red); }
+.ont { color: var(--orange); font-weight: 700; }
+.assumptions { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.assumptions h3 { font-size: 13px; margin-bottom: 8px; color: var(--text); }
+.assumptions ul { padding-left: 20px; color: var(--dim); }
+.assumptions li { margin-bottom: 5px; }
+</style>
+</head>
+<body>
+
+<h1>US Shipping Cost Optimization — March 2026</h1>
+<div class="sub">Estimated monthly saving from two changes: (1) adding Ontrac as priority #3 carrier, (2) fixing USPS GA priority leakage.<br>Modeled on all 13,943 March US orders — ideal scenario where every order ships from US warehouses (LA or NJ).</div>
+
+<!-- ===== SCENARIOS ===== -->
+<div class="scenarios">
+  <div class="scenario">
+    <div class="scn-tag">Current Setup</div>
+    <div class="scn-body">COE 4PX → UNIUNI → <strong>Amazon</strong> or <strong style="color:var(--purple)">USPS GA</strong> → FedEx HD</div>
+    <div class="scn-desc">Amazon and USPS GA compete at the same priority level. Lightweight orders leak to USPS GA (~$9.71/order avg) instead of being caught by UNIUNI (~$4/order).</div>
+  </div>
+  <div class="scn-arrow">→</div>
+  <div class="scenario">
+    <div class="scn-tag">Proposed Setup</div>
+    <div class="scn-body">COE 4PX → UNIUNI → <strong style="color:var(--orange)">Ontrac</strong> → Amazon → FedEx HD → <strong style="color:var(--purple)">USPS GA</strong></div>
+    <div class="scn-desc">Two changes: insert Ontrac at #3 (cheaper than Amazon in 38 states), and push USPS GA to last resort (PO Box, APO/FPO, territories only).</div>
+  </div>
+</div>
+
+<!-- ===== KPIs ===== -->
+<div class="grid cards3">
+  <div class="card">
+    <div class="label">Total Monthly Saving</div>
+    <div class="value" style="color:var(--green)" id="kpi-total"></div>
+    <div class="delta dim" id="kpi-pct"></div>
+    <div class="saving-bar" id="saving-bar"></div>
+  </div>
+  <div class="card">
+    <div class="label" style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:var(--purple);display:inline-block"></span> Fix Priority (USPS GA → UNIUNI/COE)</div>
+    <div class="value" style="color:var(--purple)" id="kpi-priority"></div>
+    <div class="delta dim" id="kpi-priority-detail"></div>
+  </div>
+  <div class="card">
+    <div class="label" style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:var(--orange);display:inline-block"></span> Add Ontrac (Amazon → Ontrac)</div>
+    <div class="value" style="color:var(--orange)" id="kpi-ontrac"></div>
+    <div class="delta dim" id="kpi-ontrac-detail"></div>
+  </div>
+</div>
+
+<div class="section grid cards4">
+  <div class="card">
+    <div class="label">Annualized Saving</div>
+    <div class="value" id="kpi-annual"></div>
+    <div class="delta dim">March × 12</div>
+  </div>
+  <div class="card">
+    <div class="label">Est. Current Monthly Spend</div>
+    <div class="value" id="kpi-current"></div>
+    <div class="delta dim" id="kpi-orders"></div>
+  </div>
+  <div class="card">
+    <div class="label">Orders Rerouted</div>
+    <div class="value" id="kpi-rerouted"></div>
+    <div class="delta dim" id="kpi-rerouted-detail"></div>
+  </div>
+  <div class="card">
+    <div class="label">Est. Optimized Monthly Spend</div>
+    <div class="value" id="kpi-optimized"></div>
+    <div class="delta green" id="kpi-optimized-delta"></div>
+  </div>
+</div>
+
+<!-- ===== MAP + TABLE ===== -->
+<div class="section grid row-map">
+  <div class="card">
+    <h2>Saving by state</h2>
+    <div id="map" class="map"></div>
+    <div class="legend"><span class="la">LA warehouse (USLAXC)</span><span class="nj">NJ warehouse (USNYCA)</span></div>
+    <div class="callout purple">
+      <strong>Priority fix saving</strong> is spread across all states — wherever USPS GA orders exist, rerouting them to UNIUNI or COE saves $4–6 per order.
+    </div>
+    <div class="callout" style="margin-top:8px">
+      <strong>Ontrac saving</strong> is concentrated in NJ → New England. From LA, COE + UNIUNI already cover 97.6% of orders, leaving almost nothing for Ontrac to replace.
+    </div>
+  </div>
+  <div class="card">
+    <h2>Top states by total saving</h2>
+    <table>
+      <thead><tr><th>State</th><th>WH</th><th class="num">Orders</th><th class="num">Saving</th></tr></thead>
+      <tbody id="state-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== CHARTS ===== -->
+<div class="section grid row2">
+  <div class="card"><h2>Carrier mix: current vs optimized</h2><div id="mix-chart" class="chart"></div></div>
+  <div class="card"><h2>Saving by weight band</h2><div id="wt-chart" class="chart"></div></div>
+</div>
+
+<div class="section grid row2">
+  <div class="card"><h2>Saving by warehouse</h2><div id="wh-chart" class="chart"></div></div>
+  <div class="card"><h2>Saving breakdown by warehouse</h2><div id="wh-breakdown" class="chart"></div></div>
+</div>
+
+<!-- ===== METHODOLOGY ===== -->
+<div class="section method">
+  <h2>How the Calculation Works</h2>
+
+  <div style="margin-bottom:18px">
+    <h3 style="font-size:13px;margin-bottom:10px;color:var(--text)">Data Sources</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px">
+        <div style="font-weight:700;color:var(--text);font-size:12px;margin-bottom:4px">Total Tab</div>
+        <div style="color:var(--dim);font-size:11px;line-height:1.6">All 13,943 US orders in March 2026. Includes orders shipped from both US warehouses and China. Contains: destination state, SKU, quantity, weight, original warehouse, and carrier channel. <strong style="color:var(--text)">Used as the full order universe for the estimation.</strong></div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px">
+        <div style="font-weight:700;color:var(--text);font-size:12px;margin-bottom:4px">Partial Tab</div>
+        <div style="color:var(--dim);font-size:11px;line-height:1.6">9,009 orders that were actually shipped from US warehouses (LA/NJ) with real shipping cost breakdowns. Contains: dest zip, zone, base freight, fuel, residential, remote, and total cost per order. <strong style="color:var(--text)">Used to calibrate surcharge multipliers and weight estimates.</strong></div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px">
+        <div style="font-weight:700;color:var(--text);font-size:12px;margin-bottom:4px">Rate Card (US 2C Tab + Zone Tables)</div>
+        <div style="color:var(--dim);font-size:11px;line-height:1.6">Carrier pricing tables for COE 4PX, UNIUNI, Ontrac, Amazon, FedEx HD, and USPS GA — base freight by zone and weight. Zone tables (USLAXC / USNYCA) map zip codes to carrier zones per warehouse. <strong style="color:var(--text)">Used to price every order under each scenario.</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <ol>
+    <li><strong>Start with the total tab</strong> — all 13,943 March US orders. In reality, some shipped from China due to stock-outs, but we model the ideal scenario where all orders ship from US warehouses.</li>
+    <li><strong>Warehouse assignment:</strong> Each order is assigned to LA (USLAXC) or NJ (USNYCA) based on the destination state and the warehouse coverage map.</li>
+    <li><strong>Package weight:</strong> Estimated from the median weight of the same SKU in the partial tab (real US-shipped orders). If no SKU match exists, the overall median weight (2.9 kg) is used.</li>
+    <li><strong>Zone lookup:</strong> Using the USLAXC / USNYCA zone tables from the rate card. Since the total tab has state but no zip code, we use the dominant zone (most common zone by zip count) for each state-carrier-warehouse combination.</li>
+    <li><strong>Current cost model:</strong> For US-shipped orders, we use the actual carrier from the channel field. For China-shipped orders, we apply the observed USPS GA leakage rate (26.4% of lightweight orders ≤1.5 kg) based on partial tab patterns. Orders assigned to USPS GA are priced at the USPS GA rate card. All others follow the cascade: COE → UNIUNI → Amazon → FedEx HD.
+    </li>
+    <li><strong>Optimized cost model:</strong> Every order runs through the proposed cascade:
+      <div class="cascade-box">
+        COE covers postcode? → <span class="y">Yes: use COE</span> / <span class="n">No</span> → UNIUNI? → <span class="y">Yes</span> / <span class="n">No</span> → <span class="ont">Ontrac?</span> → <span class="y">Yes: use Ontrac</span> / <span class="n">No</span> → Amazon → FedEx HD → USPS GA (last resort)
+      </div>
+    </li>
+    <li><strong>Surcharges:</strong> Amazon uses a calibrated multiplier (<span id="amz-mult"></span>×) derived from real partial tab data (total Amazon spend ÷ modeled base freight). Ontrac uses the same multiplier as a conservative estimate (no Ontrac invoices yet). COE and UNIUNI have no surcharge. USPS GA has no surcharge.</li>
+    <li><strong>Saving = Current cost − Optimized cost</strong>, summed across all orders. Annualized = March × 12.</li>
+  </ol>
+
+  <div class="assumptions">
+    <h3>Key Assumptions & Limitations</h3>
+    <ul>
+      <li><strong>No zip-code precision:</strong> state-level dominant zones introduce some error for states spanning multiple zones.</li>
+      <li><strong>Ontrac surcharges are estimated:</strong> using the Amazon multiplier as a proxy. Once live invoices exist, this can be refined.</li>
+      <li><strong>USPS GA leakage is modeled:</strong> for China-shipped orders, we apply the 26.4% leakage rate observed in US-shipped lightweight orders. Actual leakage may differ.</li>
+      <li><strong>Annualization:</strong> assumes March volume is representative. Does not model seasonality or growth.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+const DATA = {"n_orders": 13943, "total_current": 82529.0, "total_optimized": 75875.0, "total_saving": 6655.0, "annualized_saving": 79859.0, "saving_pct": 8.1, "priority_fix_saving": 5254.0, "priority_fix_orders": 1188, "ontrac_saving": 1401.0, "ontrac_orders": 986, "usps_ga_orders": 1188, "mix_current": {"UNIUNI": 6678, "COE": 5069, "USPS_GA": 1188, "AMAZON": 1008}, "mix_optimized": {"UNIUNI": 7380, "COE": 5407, "ONTRAC": 986, "AMAZON": 170}, "by_wh": {"NJ": {"n": 9005, "current": 55586.17880529962, "optimized": 50254.79577389233, "saving": 5331.383031407253, "priority_fix": 3926.1973490233386, "ontrac_save": 1405.1856823839182}, "LA": {"n": 4938, "current": 26943.255624721045, "optimized": 25619.712746411602, "saving": 1323.5428783094283, "priority_fix": 1328.0048180940628, "ontrac_save": -4.461939784634541}}, "by_wt": {"<1kg": {"n": 1081, "saving": 1002.2556667702911, "priority_fix": 862.0454061767409, "ontrac_save": 140.2102605935508}, "2-5kg": {"n": 9613, "saving": 2331.2240459901323, "priority_fix": 1399.933551565928, "ontrac_save": 931.2904944241848}, "5-10kg": {"n": 802, "saving": 337.6030211461998, "priority_fix": 296.8103563790377, "ontrac_save": 40.79266476716238}, "1-2kg": {"n": 2426, "saving": 2899.300886681893, "priority_fix": 2605.9128529956947, "ontrac_save": 293.3880336861958}, "10-22kg": {"n": 21, "saving": 84.54228912818385, "priority_fix": 89.5, "ontrac_save": -4.957710871816159}}, "by_state_list": [{"state": "New York", "abbr": "NY", "wh": "NJ", "n": 1200, "saving": 676.83, "priority_fix": 676.83, "ontrac_save": 0}, {"state": "Massachusetts", "abbr": "MA", "wh": "NJ", "n": 458, "saving": 675.31, "priority_fix": -6.08, "ontrac_save": 681.39}, {"state": "Minnesota", "abbr": "MN", "wh": "NJ", "n": 228, "saving": 470.13, "priority_fix": 470.13, "ontrac_save": 0}, {"state": "Connecticut", "abbr": "CT", "wh": "NJ", "n": 235, "saving": 349.7, "priority_fix": -1.97, "ontrac_save": 351.67}, {"state": "Texas", "abbr": "TX", "wh": "LA", "n": 1097, "saving": 314.66, "priority_fix": 314.66, "ontrac_save": 0}, {"state": "Louisiana", "abbr": "LA", "wh": "NJ", "n": 106, "saving": 274.49, "priority_fix": 274.49, "ontrac_save": 0}, {"state": "Georgia", "abbr": "GA", "wh": "NJ", "n": 421, "saving": 241.1, "priority_fix": 241.1, "ontrac_save": 0}, {"state": "Florida", "abbr": "FL", "wh": "NJ", "n": 766, "saving": 212.9, "priority_fix": 212.9, "ontrac_save": 0}, {"state": "North Carolina", "abbr": "NC", "wh": "NJ", "n": 492, "saving": 205.95, "priority_fix": 205.95, "ontrac_save": 0}, {"state": "Pennsylvania", "abbr": "PA", "wh": "NJ", "n": 561, "saving": 191.16, "priority_fix": 191.16, "ontrac_save": 0}, {"state": "Michigan", "abbr": "MI", "wh": "NJ", "n": 339, "saving": 189.07, "priority_fix": 189.07, "ontrac_save": 0}, {"state": "Tennessee", "abbr": "TN", "wh": "NJ", "n": 268, "saving": 173.5, "priority_fix": 173.5, "ontrac_save": 0}, {"state": "Wisconsin", "abbr": "WI", "wh": "NJ", "n": 232, "saving": 170.91, "priority_fix": 170.91, "ontrac_save": 0}, {"state": "Iowa", "abbr": "IA", "wh": "NJ", "n": 113, "saving": 167.63, "priority_fix": 167.63, "ontrac_save": 0}, {"state": "Illinois", "abbr": "IL", "wh": "NJ", "n": 510, "saving": 164.76, "priority_fix": 164.76, "ontrac_save": 0}, {"state": "California", "abbr": "CA", "wh": "LA", "n": 1786, "saving": 164.37, "priority_fix": 164.37, "ontrac_save": 0}, {"state": "Kansas", "abbr": "KS", "wh": "LA", "n": 88, "saving": 149.92, "priority_fix": 149.92, "ontrac_save": 0}, {"state": "Colorado", "abbr": "CO", "wh": "LA", "n": 380, "saving": 140.73, "priority_fix": 145.19, "ontrac_save": -4.46}, {"state": "Washington", "abbr": "WA", "wh": "LA", "n": 358, "saving": 130.93, "priority_fix": 130.93, "ontrac_save": 0}, {"state": "Rhode Island", "abbr": "RI", "wh": "NJ", "n": 85, "saving": 124.21, "priority_fix": -1.31, "ontrac_save": 125.52}, {"state": "Maine", "abbr": "ME", "wh": "NJ", "n": 87, "saving": 112.57, "priority_fix": 1.19, "ontrac_save": 111.38}, {"state": "Virginia", "abbr": "VA", "wh": "NJ", "n": 438, "saving": 112.54, "priority_fix": 112.54, "ontrac_save": 0}, {"state": "Missouri", "abbr": "MO", "wh": "NJ", "n": 174, "saving": 109.58, "priority_fix": 109.58, "ontrac_save": 0}, {"state": "New Hampshire", "abbr": "NH", "wh": "NJ", "n": 90, "saving": 107.92, "priority_fix": -9.44, "ontrac_save": 117.36}, {"state": "Oregon", "abbr": "OR", "wh": "LA", "n": 177, "saving": 96.75, "priority_fix": 96.75, "ontrac_save": 0}, {"state": "South Carolina", "abbr": "SC", "wh": "NJ", "n": 184, "saving": 94.48, "priority_fix": 94.48, "ontrac_save": 0}, {"state": "Maryland", "abbr": "MD", "wh": "NJ", "n": 300, "saving": 93.57, "priority_fix": 93.57, "ontrac_save": 0}, {"state": "Montana", "abbr": "MT", "wh": "LA", "n": 79, "saving": 86.97, "priority_fix": 86.97, "ontrac_save": 0}, {"state": "Alabama", "abbr": "AL", "wh": "NJ", "n": 139, "saving": 77.88, "priority_fix": 77.88, "ontrac_save": 0}, {"state": "Nebraska", "abbr": "NE", "wh": "LA", "n": 69, "saving": 75.04, "priority_fix": 75.04, "ontrac_save": 0}, {"state": "Arkansas", "abbr": "AR", "wh": "NJ", "n": 56, "saving": 72.86, "priority_fix": 72.86, "ontrac_save": 0}, {"state": "Ohio", "abbr": "OH", "wh": "NJ", "n": 363, "saving": 72.75, "priority_fix": 72.75, "ontrac_save": 0}, {"state": "New Jersey", "abbr": "NJ", "wh": "NJ", "n": 635, "saving": 60.63, "priority_fix": 60.63, "ontrac_save": 0}, {"state": "Kentucky", "abbr": "KY", "wh": "NJ", "n": 109, "saving": 53.17, "priority_fix": 53.17, "ontrac_save": 0}, {"state": "Indiana", "abbr": "IN", "wh": "NJ", "n": 191, "saving": 44.06, "priority_fix": 44.06, "ontrac_save": 0}, {"state": "Idaho", "abbr": "ID", "wh": "LA", "n": 90, "saving": 34.44, "priority_fix": 34.44, "ontrac_save": 0}, {"state": "Mississippi", "abbr": "MS", "wh": "NJ", "n": 23, "saving": 32.16, "priority_fix": 32.16, "ontrac_save": 0}, {"state": "Oklahoma", "abbr": "OK", "wh": "LA", "n": 95, "saving": 27.93, "priority_fix": 27.93, "ontrac_save": 0}, {"state": "New Mexico", "abbr": "NM", "wh": "LA", "n": 48, "saving": 23.64, "priority_fix": 23.64, "ontrac_save": 0}, {"state": "West Virginia", "abbr": "WV", "wh": "NJ", "n": 30, "saving": 22.81, "priority_fix": 4.94, "ontrac_save": 17.86}, {"state": "Utah", "abbr": "UT", "wh": "LA", "n": 186, "saving": 22.75, "priority_fix": 22.75, "ontrac_save": 0}, {"state": "Arizona", "abbr": "AZ", "wh": "LA", "n": 228, "saving": 22.09, "priority_fix": 22.09, "ontrac_save": 0}, {"state": "Nevada", "abbr": "NV", "wh": "LA", "n": 140, "saving": 18.02, "priority_fix": 18.02, "ontrac_save": 0}, {"state": "South Dakota", "abbr": "SD", "wh": "LA", "n": 50, "saving": 12.6, "priority_fix": 12.6, "ontrac_save": 0}, {"state": "North Dakota", "abbr": "ND", "wh": "LA", "n": 49, "saving": 8.77, "priority_fix": 8.77, "ontrac_save": 0}, {"state": "District of Columbia", "abbr": "DC", "wh": "NJ", "n": 74, "saving": 3.5, "priority_fix": 3.5, "ontrac_save": 0}, {"state": "Delaware", "abbr": "DE", "wh": "NJ", "n": 45, "saving": 3.08, "priority_fix": 3.08, "ontrac_save": 0}, {"state": "Wyoming", "abbr": "WY", "wh": "LA", "n": 18, "saving": -6.06, "priority_fix": -6.06, "ontrac_save": 0}, {"state": "Vermont", "abbr": "VT", "wh": "NJ", "n": 53, "saving": -29.82, "priority_fix": -29.82, "ontrac_save": 0}], "amazon_multiplier": 1.5492846474425506};
+
+const fmt = n => '$' + Math.round(n).toLocaleString();
+const fmt2 = n => '$' + (Math.round(n*100)/100).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+
+// KPIs
+document.getElementById('kpi-total').textContent = fmt(DATA.total_saving);
+document.getElementById('kpi-pct').textContent = DATA.saving_pct + '% of current spend · Annualized ' + fmt(DATA.annualized_saving);
+document.getElementById('kpi-priority').textContent = fmt(DATA.priority_fix_saving);
+document.getElementById('kpi-priority-detail').textContent = DATA.priority_fix_orders.toLocaleString() + ' USPS GA orders → UNIUNI/COE · avg $' + (DATA.priority_fix_saving/DATA.priority_fix_orders).toFixed(2) + '/order';
+document.getElementById('kpi-ontrac').textContent = fmt(DATA.ontrac_saving);
+document.getElementById('kpi-ontrac-detail').textContent = DATA.ontrac_orders.toLocaleString() + ' Amazon orders → Ontrac · avg $' + (DATA.ontrac_saving/DATA.ontrac_orders).toFixed(2) + '/order';
+document.getElementById('kpi-annual').textContent = fmt(DATA.annualized_saving);
+document.getElementById('kpi-current').textContent = fmt(DATA.total_current);
+document.getElementById('kpi-orders').textContent = DATA.n_orders.toLocaleString() + ' orders scored';
+document.getElementById('kpi-rerouted').textContent = (DATA.priority_fix_orders + DATA.ontrac_orders).toLocaleString();
+document.getElementById('kpi-rerouted-detail').textContent = DATA.priority_fix_orders + ' from USPS GA + ' + DATA.ontrac_orders + ' from Amazon';
+document.getElementById('kpi-optimized').textContent = fmt(DATA.total_optimized);
+document.getElementById('kpi-optimized-delta').textContent = '↓ ' + fmt(DATA.total_saving) + ' vs current';
+if(document.getElementById('amz-mult')) document.getElementById('amz-mult').textContent = DATA.amazon_multiplier.toFixed(3);
+
+// Saving bar
+const totalSave = DATA.priority_fix_saving + DATA.ontrac_saving;
+const pPct = Math.round(DATA.priority_fix_saving / totalSave * 100);
+const oPct = 100 - pPct;
+document.getElementById('saving-bar').innerHTML =
+  '<div class="segment seg-priority" style="width:'+pPct+'%">Priority fix '+pPct+'%</div>' +
+  '<div class="segment seg-ontrac" style="width:'+oPct+'%">Ontrac '+oPct+'%</div>';
+
+// Layout
+const L = {
+  paper_bgcolor:'#171a21', plot_bgcolor:'#171a21',
+  font:{color:'#e8eaf0',family:'-apple-system,sans-serif',size:11},
+  margin:{l:55,r:20,t:16,b:55},
+  xaxis:{gridcolor:'#262a35',linecolor:'#262a35'},
+  yaxis:{gridcolor:'#262a35',linecolor:'#262a35'},
+};
+const C = {displayModeBar:false, responsive:true};
+
+// 1. Map — total saving by state
+const sl = DATA.by_state_list;
+Plotly.newPlot('map', [{
+  type:'choropleth', locationmode:'USA-states',
+  locations: sl.map(s=>s.abbr),
+  z: sl.map(s=>s.saving),
+  text: sl.map(s=>s.state+'<br>Orders: '+s.n+'<br>Total saving: '+fmt2(s.saving)+'<br>  Priority fix: '+fmt2(s.priority_fix)+'<br>  Ontrac: '+fmt2(s.ontrac_save)+'<br>Warehouse: '+s.wh),
+  hoverinfo:'text',
+  colorscale:[[0,'#171a21'],[0.01,'#1e3a2a'],[0.5,'#22c55e'],[1,'#4ade80']],
+  colorbar:{title:'Saving $',tickfont:{color:'#e8eaf0'},bgcolor:'#171a21',bordercolor:'#262a35'},
+  zmin:0,
+}], {...L, geo:{scope:'usa',projection:{type:'albers usa'},bgcolor:'#171a21',showlakes:false,showland:true,landcolor:'#0f1115',subunitcolor:'#262a35'},margin:{l:0,r:0,t:10,b:10},height:420}, C);
+
+// 2. State table
+const tbody = document.getElementById('state-table');
+sl.filter(s=>s.saving>0).slice(0,15).forEach(s=>{
+  const r = document.createElement('tr');
+  r.innerHTML = '<td>'+s.state+'</td><td><span class="pill '+s.wh.toLowerCase()+'">'+s.wh+'</span></td><td class="num">'+s.n.toLocaleString()+'</td><td class="num">'+fmt2(s.saving)+'</td>';
+  tbody.appendChild(r);
+});
+
+// 3. Carrier mix
+const carriers = ['COE','UNIUNI','ONTRAC','AMAZON','USPS_GA','FEDEX_HD'];
+const cLabels = ['COE 4PX','UNIUNI','Ontrac','Amazon','USPS GA','FedEx HD'];
+Plotly.newPlot('mix-chart', [
+  {x:cLabels, y:carriers.map(c=>DATA.mix_current[c]||0), name:'Current', type:'bar', marker:{color:'#3b82f6'}},
+  {x:cLabels, y:carriers.map(c=>DATA.mix_optimized[c]||0), name:'Optimized', type:'bar', marker:{color:'#22c55e'}},
+], {...L, barmode:'group', yaxis:{...L.yaxis,title:'# orders'}, legend:{orientation:'h',y:-0.22}}, C);
+
+// 4. Weight band — stacked: priority fix + ontrac
+const wb = ['<1kg','1-2kg','2-5kg','5-10kg','10-22kg','>22kg'];
+Plotly.newPlot('wt-chart', [
+  {x:wb, y:wb.map(b=>(DATA.by_wt[b]||{}).priority_fix||0), name:'Priority fix', type:'bar', marker:{color:'#a855f7'},
+   text:wb.map(b=>'n='+(DATA.by_wt[b]||{n:0}).n.toLocaleString()), hovertemplate:'%{x}<br>Priority fix: %{y:$,.0f}<br>%{text}<extra></extra>'},
+  {x:wb, y:wb.map(b=>(DATA.by_wt[b]||{}).ontrac_save||0), name:'Ontrac', type:'bar', marker:{color:'#ff7a1a'},
+   hovertemplate:'%{x}<br>Ontrac: %{y:$,.0f}<extra></extra>'},
+], {...L, barmode:'stack', yaxis:{...L.yaxis,title:'Saving $'}, legend:{orientation:'h',y:-0.22}}, C);
+
+// 5. Warehouse total
+const whs = ['LA','NJ'];
+Plotly.newPlot('wh-chart', [
+  {x:whs, y:whs.map(w=>DATA.by_wh[w].current), name:'Current', type:'bar', marker:{color:'#3b82f6'}},
+  {x:whs, y:whs.map(w=>DATA.by_wh[w].optimized), name:'Optimized', type:'bar', marker:{color:'#22c55e'}},
+], {...L, barmode:'group', yaxis:{...L.yaxis,title:'Monthly cost $'}, legend:{orientation:'h',y:-0.22}}, C);
+
+// 6. Warehouse breakdown
+Plotly.newPlot('wh-breakdown', [
+  {x:whs, y:whs.map(w=>DATA.by_wh[w].priority_fix), name:'Priority fix', type:'bar', marker:{color:'#a855f7'}},
+  {x:whs, y:whs.map(w=>DATA.by_wh[w].ontrac_save), name:'Ontrac', type:'bar', marker:{color:'#ff7a1a'}},
+], {...L, barmode:'stack', yaxis:{...L.yaxis,title:'Saving $'}, legend:{orientation:'h',y:-0.22}}, C);
+</script>
+</body>
+</html>
